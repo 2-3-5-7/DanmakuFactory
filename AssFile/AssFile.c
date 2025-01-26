@@ -3233,13 +3233,13 @@ int getMsgBoxHeight(DANMAKU *message, int fontSize, int width)
             textPtr++;
         }
 
-        int topBoxHeight = fontSize + fontSize*(4.0/5.0) + radius/2.0;
+        int topBoxHeight = fontSize + radius/2.0;
         int btmBoxHeight = lineNum * fontSize + radius/2;
         boxHeight = topBoxHeight + btmBoxHeight;
     }
     else if (message->type == MSG_GUARD)
     {
-        boxHeight = fontSize + fontSize*(4.0/5.0) + radius;
+        boxHeight = fontSize + radius;
     }
 
     return boxHeight;
@@ -3252,6 +3252,10 @@ int printMessage(FILE *filePtr,
     int startPosX, int startPosY, int endPosX, int endPosY, int startTime, int endTime,
     int width, int fontSize, char *effect, DANMAKU *message)
 {
+
+#define TRANS_FG ""  // 消息框文字的透明度，现在维持不透明
+#define TRANS_BG "\\alpha&H80"  // 消息框背景色 50% 透明
+#define TRANS_GIFT "\\alpha&H80"  // 礼物文字 50% 透明
     int radius = fontSize / 2;
     char actionStr[MAX_TEXT_LENGTH];
     
@@ -3260,10 +3264,10 @@ int printMessage(FILE *filePtr,
         fprintf(filePtr, "\nDialogue: 0,");
         printTime(filePtr, startTime, ",");
         printTime(filePtr, endTime, ",");
-        fprintf(filePtr, "MSG,,0000,0000,0000,,{%s%s}{\\c&HBCACF7\\b1}%s: {\\c&HFFFFFF\\b0}%s x%d",
+        fprintf(filePtr, "MSG,,0000,0000,0000,,{%s%s" TRANS_GIFT "}{\\c&HBCACF7\\b1}%s: {\\c&HFFFFFF\\b0}%s",
             getActionStr(actionStr, 0, 0, startPosX, startPosY, endPosX, endPosY), /* 移动指令 */
             effect, /* 补充特效 */
-            message->user->name, message->gift->name, message->gift->count /* 礼物信息 */
+            message->user->name, message->gift->name /* 礼物信息 */
         );
     }
     else if (message->type == MSG_SUPER_CHAT)
@@ -3304,7 +3308,7 @@ int printMessage(FILE *filePtr,
         
         *resStrPtr = '\0';
 
-        int topBoxHeight = fontSize + fontSize*(4.0/5.0) + radius/2.0;
+        int topBoxHeight = fontSize + radius/2.0;
         int btmBoxHeight = lineNum * fontSize + radius/2;
 
         /* 配色 */
@@ -3368,7 +3372,7 @@ int printMessage(FILE *filePtr,
         fprintf(filePtr, "\nDialogue: 0,");
         printTime(filePtr, startTime, ",");
         printTime(filePtr, endTime, ",");
-        fprintf(filePtr, "MSG,,0000,0000,0000,,{%s%s%s\\p1\\bord0\\shad0}m %d %d b %d %d %d %d %d %d "
+        fprintf(filePtr, "MSG,,0000,0000,0000,,{%s%s" TRANS_BG "%s\\p1\\bord0\\shad0}m %d %d b %d %d %d %d %d %d "
             "l %d %d b %d %d %d %d %d %d l %d %d l %d %d",
             getActionStr(actionStr, 0, 0, startPosX, startPosY, endPosX, endPosY), /* 移动指令 */
             effect, /* 补充特效 */
@@ -3385,7 +3389,7 @@ int printMessage(FILE *filePtr,
         fprintf(filePtr, "\nDialogue: 0,");
         printTime(filePtr, startTime, ",");
         printTime(filePtr, endTime, ",");
-        fprintf(filePtr, "MSG,,0000,0000,0000,,{%s%s\\p1%s\\bord0\\shad0}m %d %d l %d %d l %d %d b %d %d %d %d %d %d l %d %d"
+        fprintf(filePtr, "MSG,,0000,0000,0000,,{%s%s" TRANS_BG "\\p1%s\\bord0\\shad0}m %d %d l %d %d l %d %d b %d %d %d %d %d %d l %d %d"
             "b %d %d %d %d %d %d",
             getActionStr(actionStr, 0, topBoxHeight, startPosX, startPosY, endPosX, endPosY), /* 移动指令 */
             effect, /* 补充特效 */
@@ -3402,30 +3406,34 @@ int printMessage(FILE *filePtr,
         fprintf(filePtr, "\nDialogue: 1,");
         printTime(filePtr, startTime, ",");
         printTime(filePtr, endTime, ",");
-        fprintf(filePtr, "MSG,,0000,0000,0000,,{%s%s%s\\b1\\bord0\\shad0}%s",
+        fprintf(filePtr, "MSG,,0000,0000,0000,,{%s%s" TRANS_FG "%s\\b1\\bord0\\shad0}%s{%s%s\\fs%d\\bord0\\shad0} ¥%d",
             getActionStr(actionStr, radius/2, radius/3, startPosX, startPosY, endPosX, endPosY), /* 移动指令 */
             effect, /* 补充特效 */
             userIDColor, /* 颜色 */
-            message->user->name /* 用户id */
-        );
-
-        /* SC金额 */
-        fprintf(filePtr, "\nDialogue: 1,");
-        printTime(filePtr, startTime, ",");
-        printTime(filePtr, endTime, ",");
-        fprintf(filePtr, "MSG,,0000,0000,0000,,{%s%s%s\\fs%d\\bord0\\shad0}SuperChat CNY %d",
-            getActionStr(actionStr, radius/2, fontSize+radius/3, startPosX, startPosY, endPosX, endPosY), /* 移动指令 */
+            message->user->name, /* 用户id */
             effect, /* 补充特效 */
             textColor, /* 颜色 */
             (int)(fontSize*(4.0/5.0)), /* 金额文字大小 */
-            message->gift->price / 1000/* SC金额 */
+            message->gift->price / 1000 /* SC金额 */
         );
+
+        /* SC金额 */
+        // fprintf(filePtr, "\nDialogue: 1,");
+        // printTime(filePtr, startTime, ",");
+        // printTime(filePtr, endTime, ",");
+        // fprintf(filePtr, "MSG,,0000,0000,0000,,{%s%s%s\\fs%d\\bord0\\shad0}SuperChat CNY %d",
+        //     getActionStr(actionStr, radius/2, fontSize+radius/3, startPosX, startPosY, endPosX, endPosY), /* 移动指令 */
+        //     effect, /* 补充特效 */
+        //     textColor, /* 颜色 */
+        //     (int)(fontSize*(4.0/5.0)), /* 金额文字大小 */
+        //     message->gift->price / 1000/* SC金额 */
+        // );
 
         /* SC内容 */
         fprintf(filePtr, "\nDialogue: 1,");
         printTime(filePtr, startTime, ",");
         printTime(filePtr, endTime, ",");
-        fprintf(filePtr, "MSG,,0000,0000,0000,,{%s%s\\c&HFFFFFF\\bord0\\shad0}%s",
+        fprintf(filePtr, "MSG,,0000,0000,0000,,{%s%s" TRANS_FG "\\c&HFFFFFF\\bord0\\shad0}%s",
             getActionStr(actionStr, radius/2, topBoxHeight, startPosX, startPosY, endPosX, endPosY), /* 移动指令 */
             effect, /* 补充特效 */
             scMsgStr /* SC内容 */
@@ -3433,7 +3441,7 @@ int printMessage(FILE *filePtr,
     }
     else if (message->type == MSG_GUARD)
     {
-        int boxHeight = fontSize + fontSize*(4.0/5.0) + radius;
+        int boxHeight = fontSize + radius;
         
         /* 配色 */
         char boxColor[ASS_COLOR_LEN];
@@ -3461,7 +3469,7 @@ int printMessage(FILE *filePtr,
         fprintf(filePtr, "\nDialogue: 0,");
         printTime(filePtr, startTime, ",");
         printTime(filePtr, endTime, ",");
-        fprintf(filePtr, "MSG,,0000,0000,0000,,{%s%s%s\\p1\\bord0\\shad0}m %d %d b %d %d %d %d %d %d "
+        fprintf(filePtr, "MSG,,0000,0000,0000,,{%s%s" TRANS_BG "%s\\p1\\bord0\\shad0}m %d %d b %d %d %d %d %d %d "
             "l %d %d b %d %d %d %d %d %d l %d %d b %d %d %d %d %d %d l %d %d b %d %d %d %d %d %d",
             getActionStr(actionStr, 0, 0, startPosX, startPosY, endPosX, endPosY), /* 移动指令 */
             effect, /* 补充特效 */
@@ -3480,24 +3488,28 @@ int printMessage(FILE *filePtr,
         fprintf(filePtr, "\nDialogue: 1,");
         printTime(filePtr, startTime, ",");
         printTime(filePtr, endTime, ",");
-        fprintf(filePtr, "MSG,,0000,0000,0000,,{%s%s%s\\bord0\\shad0}%s",
+        fprintf(filePtr, "MSG,,0000,0000,0000,,{%s%s" TRANS_FG "%s\\bord0\\shad0}%s{%s%s\\fs%d\\bord0\\shad0} ⚓%s",
             getActionStr(actionStr, radius/2, radius/3, startPosX, startPosY, endPosX, endPosY), /* 移动指令 */
             effect, /* 补充特效 */
             userIDColor, /* 颜色 */
-            message->user->name /* 用户id */
-        );
-
-        /* 舰长信息 */
-        fprintf(filePtr, "\nDialogue: 1,");
-        printTime(filePtr, startTime, ",");
-        printTime(filePtr, endTime, ",");
-        fprintf(filePtr, "MSG,,0000,0000,0000,,{%s%s%s\\fs%d\\bord0\\shad0}Welcome new %s!",
-            getActionStr(actionStr, radius/2, fontSize+radius/3, startPosX, startPosY, endPosX, endPosY), /* 移动指令 */
+            message->user->name, /* 用户id */
             effect, /* 补充特效 */
             textColor, /* 颜色 */
             (int)(fontSize*(4.0/5.0)), /* 舰长信息文字大小 */
             message->gift->name /* 礼物名称 */
         );
+
+        /* 舰长信息 */
+        // fprintf(filePtr, "\nDialogue: 1,");
+        // printTime(filePtr, startTime, ",");
+        // printTime(filePtr, endTime, ",");
+        // fprintf(filePtr, "MSG,,0000,0000,0000,,{%s%s%s\\fs%d\\bord0\\shad0}Welcome new %s!",
+        //     getActionStr(actionStr, radius/2, fontSize+radius/3, startPosX, startPosY, endPosX, endPosY), /* 移动指令 */
+        //     effect, /* 补充特效 */
+        //     textColor, /* 颜色 */
+        //     (int)(fontSize*(4.0/5.0)), /* 舰长信息文字大小 */
+        //     message->gift->name /* 礼物名称 */
+        // );
     }
     
     return ferror(filePtr);
